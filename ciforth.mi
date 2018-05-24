@@ -1,0 +1,915 @@
+dnl $ Id: $
+dnl Copyright{2000,2015}: Albert van der Horst, HCC FIG Holland by GNU Public License
+\input texinfo
+@setfilename thisfilename
+@dircategory Programming
+@direntry
+* lina: (lina).                Close to ISO, Forth interpreter and compiler.
+@end direntry
+dnl @smallbook
+@afourpaper
+@settitle ciforth manual
+@setchapternewpage odd
+
+@titlepage
+@title ciforth manual
+A close-to-ISO/common intel/computer intelligence/CH+ forth.
+
+This is a standard-ISO Forth (mostly, see the section portability)
+for the configuration called thisforth:
+forthitemize
+forthitem
+version ci86gnrversion
+forthitem
+_BITS_-bits _REAL_({real mode })_PROTECTED_({protected mode })
+forthitem
+_BOOTED_({standalone })dnl
+_HOSTED_X_({running under _OS_ using system calls directly}){}dnl
+_HOSTED_MSDOS_({running under _OS_
+_CLASSIC_({with classic figforth I/O })_MODERN_({with modern MSDOS I/O })_USEBIOS_({Using the BIOS for I/O })
+})dnl
+_HOSTED_DPMI_({running under DPMI (``Windows'')})dnl
+_HOSTED_DLL_({running under MS-Windows })dnl
+_BOOTED_({ _RESPECTDOS_({It tries to keep bootfloppy's in MSDOS-compatible format})})
+_FEWBLOCKS_({forthitem
+number of blocks limited to 256})
+_SECURITY_({forthitem
+contains security words })
+_LOAD_({forthitem
+the full ISO CORE set is present, possibly after loading})
+_SOURCEFIELD_({forthitem
+headers with source fields})
+
+forthenditemize
+
+@author Albert van der Horst
+Dutch Forth Workshop
+
+
+@page
+@c @vskip Opt plus 1fill
+Copyright @copyright{{}} 2000,2015 Dutch Forth Workshop
+
+Permission is granted to copy with attribution.
+Program is protected by the GNU Public License.
+@end titlepage
+
+dnl
+dnl @ifinfo
+dnl example of stuff that only appears in info
+dnl @end ifinfo
+dnl @iftex
+dnl example of stuff that only appears in tex
+dnl @end iftex
+@page
+@node Top, Gentle Introduction, Glossary,
+@chapter Overview
+Forth is an interactive programming system.
+ciforth is a family of
+Forth's that can be generated in many different version
+for many different operation systems.
+It is sufficiently close to the ISO standard to run most programs intended
+to be portable. It deviates where less used features where
+objectionable to implement. forthxref({Manual}) Section Portability.
+
+This file documents what you as a user needs to know for using this
+particular version of ciforth called ``thisforth'' once it is installed on your system.
+
+ciforth consists of three files:
+forthitemize
+forthitem
+_BOOTED_({A booting floppy or hard disk}) dnl
+dnl look into this whether thisforth can be used all the time.
+_HOSTED_DPMI_({forthfile{(wina.com})})_DLL_({forthfile({wina.exe})})_HOSTED_MSDOS_({ forthfile({mina.com}) }) dnl
+_LINUX_N_({ thisforth })_LINUX_C_({ forthfile({ciforthc}) })  : the program
+_BOOTED_({_RESPECTDOS_({If you inspect a booting floppy from MSDOS you discover that you can
+see the  files forthfile({ciforth.com}) and forthfile({forth.lab}) . You can even start the program from MSDOS})})
+forthitem
+One of forthfile({ciforth.ps}) forthfile({ciforth.pdf}) forthfile({ciforth.html}) : the documentation
+forthitem
+forthfile({forth.lab}) : source library for auxiliary programs
+forthenditemize
+
+These files are generated together by a generic system from the file
+forthfile({fig86.gnr}) .
+The documentation applies to the ciforth with which it goes.
+
+If your Forth doesn't fit the description below get a new version.
+The information below allows an expert to reconstruct how to
+generate a corresponding version{}_VERBOSE_({. Not all of it may make
+sense to you. Tell him whether you want to
+fit the Forth to the description or vice versa})
+(forthpxref({Rationale & legalese})).
+
+These are the features:
+
+All ciforth's are forthdefi({case sensitive}).
+This is version ci86gnrversion.
+_PROTECTED_({It is running in protected mode.}) dnl
+_REAL_({It is running in real mode.}) dnl
+_BOOTED_({It is a standalone Forth.}) dnl
+_BOOTHD_({It is booting directly from a hard disk.}) dnl
+_BOOTSECTRK_({Booting from harddisk or floppy uses classical disk
+access by sector and track.}) dnl
+_BOOTLBA_({Booting from harddisk uses LBA disk access.})
+_HOSTED_({It is running under
+_HOSTED_DPMI_({DPMI (OS/2 or_OS_, or the DOS-emulator of Linux).},{_OS_})}) dnl
+_USEBIOS_({It is using BIOS for I/O, so no redirection of I/O is possible.}) dnl
+_RWHD_({Blocks are on a raw hard disk.}) dnl
+_RWFD_({Blocks are on a raw floppy disk.}) dnl
+_BLOCKSINFILE_({Blocks are allocated in files.}) dnl
+_CLASSIC_({It relies partly on DOS for I/O, partly on the BIOS.}) dnl
+_MODERN_({It uses DOS for I/O, and uses no obsolete MSDOS features.}) dnl
+_BITS16_({A number has a precision of 16 bits.}) dnl
+_BITS32_({A number has a precision of 32 bits.}) dnl
+_BITS64_({A number has a precision of 64 bits.}) dnl
+_LINUX_C_({It uses C-routines for I/O.}) dnl
+_LINUX_N_({It calls linux system from Forth directly.}) dnl
+_SECURITY_({It has compiler security, sacrificing some ISO
+compatibity.}) dnl
+_CIF_IN_({It use forthcode({PP}) instead of the ISO forthcode({>IN}) . })dnl
+_ISO_IN_({It uses forthcode({>IN}) in the way prescribed by ISO.}) dnl
+_FEWBLOCKS_({The number of blocks limited to 256.}) dnl
+_LOAD_({It contains the full ISO CORE in the kernel,
+more than is needed to make it self contained.}) dnl
+_SOURCEFIELD_({It contains a field in the header to point to source.}) dnl
+It is indirect threaded.
+
+@iftex
+If you are new to Forth you may want to read the Gentle Introduction,
+otherwise you better skip it. The third chapter most users will not
+be interested in.
+@end iftex
+
+@menu
+* Gentle Introduction:: For newbies to Forth. You don't need to read this.
+* Rationale & legalese:: For experts. You don't want to read this.
+* Manual::         User manual
+_PC_({{* Editor::         The full screen editor
+}})dnl
+* Assembler::      The assemblers
+* Errors::  What means forthsamp({ ciforth ERROR ###})?
+* Documentation::  Some references
+* Glossary::       Description of Forth words
+* Glossary Index:: Find a Forth words in the glossary
+* Forth Word Index:: All references to Forth words
+* Concept Index::
+dnl* Forth Word Index ::
+@end menu
+
+@node Gentle Introduction, Rationale & legalese, Top, Top
+@chapter Gentle introduction
+include(intro.mi)
+
+@node Rationale & legalese, Manual, Gentle Introduction, Top
+@chapter  Rationale & legalese
+include(rational.mi)                                                              `
+
+_HOSTED_X_({
+@node Manual, Assembler, Rationale & legalese, Top
+})
+_DLL_({
+@node Manual, Assembler, Rationale & legalese, Top
+})
+_PC_({
+@node Manual, Editor, Rationale & legalese, Top
+})
+
+@chapter Manual
+include(manual.mi)
+_HOSTED_X_({
+@node Assembler, Errors, Manual, Top
+})
+_DLL_({
+@node Assembler, Errors, Manual, Top
+})
+_PC_({
+@node Editor, Assembler, Manual, Top
+@chapter Editor
+
+The editor for editing screens is a very simple screen editor.
+For editing files from within thisforth you just use Your Favorite
+Editor (forthpxref({Manual})).
+
+The editor becomes available after forthsamp({WANT EDITOR})
+and is invoked by  forthsamp({<number> EDIT}) or forthcode({E-S}) for
+the current screen at forthcode({SCR}).
+
+A screen is copied to the video screen. When you exit, what you
+see within the blue cadre, is copied back into the screen.
+
+This editor has Wordstar compatible commands.
+No function key works, only control keys.
+
+
+^E ^S ^D ^X <Enter> <Tab> : Cursor up left right down. Next line. Tab.
+
+
+^A ^F : Cursor word left, right.
+
+
+^G ^T ^Y : Delete char, word, line.
+
+
+^Z ^U : Undelete word, line.
+
+
+^W ^P : Undelete word and pop. Undelete line and pop.
+
+
+^J ^O : Join lines, Open (split) line.
+
+
+ESC Q / ESC q : quit (abondon edit and do not update.)
+
+
+ESC x (or whatever, not q): exit editing, save and update.
+
+Word and line deletes stack up at the bottom of the screen.
+^P and ^W pop this stack.
+In all other case the
+last deleted item remains available for multiple undeletes.
+
+Editing outside of the blue cadre allows useful tricks.
+Small sequences perform useful actions:
+
+
+swap lines ^Y ^E ^P.
+
+
+delete line without stacking <ret> ^E ^J ^O
+
+@node Assembler, Errors, Editor, Top
+})
+@chapter Assembler
+include(assembler.mi)
+
+@node Errors, Documentation, Assembler, Top
+@chapter  Errors
+
+Errors are uniquely identified by a number.
+The error code is the same as the forthcode({THROW}) code. In other words
+the Forth exception system is used for errors.
+A ciforth error always displays
+the text ``ciforth ERROR #'' plus the error number,
+immediately and directly.
+_VERBOSE_({Of course the error numbers are given in decimal, irrespective of forthcode({BASE}).})
+This allows you to look up the error in the section ``Error explanations''.
+More specific problems are addressed in the section ``Common Problems''.
+@section Error philosophy
+If you know the error number issued by ciforth, the situation
+you are in is identified, and you can read an explanation in the next section.
+Preferably in
+addition to the number a forthdefi({mnemonic message}) is displayed.
+ It is fetched from the
+forthdefi({library file}).
+But this is not always possible, such is the nature of error
+situations.
+A mnemonic message has a size limited to 63 characters and is therefore seldomly
+a sufficient explanation.
+
+A good error system gives additional specific information about the error.
+In a plain ciforth this is limited to the input line that generated the error.
+Via the library file you may install
+a more sophisticated error reporting, if available.
+
+Within ciforth itself all error situation have their unique identification.
+You may issue errors yourself at your discretion using
+forthcode({THROW}) or, preferably, forthcode({?ERROR}) and use
+an error number with an applicable message.
+However, unless yours is a quick and dirty program, you are encouraged to
+use some other unique error number, and document it.
+@section Common problems
+_HOSTED_({
+_PC_({
+@subsection "DIR" SYSTEM doesn't work
+It is problematic for ciforth to find the command interpreter on a DOS or
+Windows system.
+Instead of inspecting environment variables that may or may not be set correctly,
+ciforth contains a string forthcode({SHELL}) , that contains the name of the
+command interpreter, with as a default forthfile({/COMMAND.COM}).
+If this is not correct you may change it as appropriate by e.g.
+forthsamp({S" C:/WINDOWS/SYSTEM/COMMAND.COM" SHELL $! })
+})
+@subsection Error 11 or 12 caused by lower case.
+If you type a standard word like forthcode({words}) in lower case,
+it will not be recognised, resulting in error 11.
+Similarly forthcode({' words}) results in error 12.
+This is because the names as defined in the standard are in upper case
+and thisforth is forthdefi({case sensitive}), i.e.
+the difference between lower and upper case is significant
+_VERBOSE_({ and only words that match in this respect too
+are found in the dictionary}).
+
+After forthsamp({1 LOAD}) or if started up using forthsamp({lina -a}) or
+forthsamp({lina -r}) you have forthcode({WANTED}) and forthcode({WANT}) available.
+You may now issue forthsamp({  WANT CASE-INSENSITIVE }) and switch the system
+into case-insensitivity and back by issuing the words forthcode({CASE-INSENSITIVE}) and
+forthcode({CASE-SENSITIVE}).
+
+Case insensitivity applies to the words looked up in the dictionary,
+not to hex digits.
+
+@subsection Error 8 or only error numbers
+If you get an error 8 as soon as you try to forthcode({LOAD}) or forthcode({LIST}) a screen
+or use an option, or if errors show up only as numbers without the mnemonic message,
+this is because you cannot access the library file.
+It may not be there, or it may not be at the expected place.
+ciforth contains a string forthcode({BLOCK-FILE}) , that contains the name of the
+library file interpreter, with as a default forthfile({forth.lab}).
+If this is not correct you may change it as appropriate by e.g.
+_PC_({ forthsamp({"C:/FORTH/forth.lab" BLOCK-FILE $! })})
+_HOSTED_X_({ forthsamp({"/usrlib/ciforth/forth.lab" BLOCK-FILE $! })})
+The library is accessible for read and write access and mnemonic message
+will be fetched from it,
+after you install it with forthsamp({2 BLOCK-INIT    1 WARNING !}).
+
+_PC_({{If you have run ciforth without this message
+before, the problem is most probably caused by
+a crash of ciforth that has left the file open.
+You are the victim of file sharing under DOS/Windows.
+The remedy is to restart Windows.}})
+@subsection Error 8 while editing a screen
+If after editing a screen, you get error 8, the screen has not been written
+to disk, because you have no write
+access for the library file.
+You must issue forthcode({DEVELOP}) which reopens the library file in READ_WRITE
+mode. Normally this should be part of loading the forthcode({EDITOR}) .
+_HOSTED_X_({ It may be of course that you don't have privilege to write
+to the file.
+As non-privileged user you cannot edit the system-wide library file.
+})
+You may always edit and use a private copy of the library file.
+The forthsamp({-i}) options installs a copy of ciforth to wherever you want,
+and you can edit there.
+Or you can copy the official library file, and edit the copy, then use it
+by the forthsamp({-l}) option.
+forthxref({Manual}) for how options work. _VERBOSE_({The forthsamp({-l}) option itself works only if at least the
+official library file has been correctly installed.})
+})
+@section Error explanations
+This section shows the explanation of the errors in ascending order.
+In actual situations sometimes you may not see the part after the semi colon.
+If in this section an explanation is missing, this means that the
+error is given for reference only; the error cannot be generated
+by your thisforth, but maybe by
+other version of ciforth or even a differently configured thisforth.
+For example for a version without
+security you will never see error 1. If it says ``not used'', this
+means it is not used by any ciforth.
+
+The errors whose message starts with forthsamp({AS:}) are used by the PostIt FixUp assembler
+in the file forthfile({asgen.frt}),(forthpxref({Assembler})).
+
+_HOSTED_({Negative error numbers are those reported by _OS_.
+If possible, mnemonic error messages are shown.
+An explanation of the error is available in the manuals only.
+_PC_({MSDOS error numbers are displayed in decimal, while in some documentation
+they are given as hex numbers.})
+
+forthsamp({ciforth ERROR # -2 : No such file })
+
+is an example of a Linux message.
+}).
+
+Here are the error explanations.
+forthitemize
+forthitem
+forthsamp({ciforth ERROR # XXX : ( NO TEXT MESSAGE AVAILABLE FOR THIS ERROR )})
+
+This is the only messages that is common to more errors,
+anything goes at the place of XXX.
+It means that information about this error is not in the library,
+but the error number remains to identify the error.
+The error number is probably used by user programs and hopefully documented there.
+So you can allocate error numbers not yet in use,
+and use them to identify your error situations.
+You can add messages to the library, but errors outside of the
+range [ M4_ERRORMIN M4_ERRORMAX ] need an edit of the source,
+or regeneration using adapted values of  {M4_ERRORMIN M4_ERRORMAX }.
+
+forthitem
+forthsamp({ciforth ERROR # 1 : EMPTY STACK})
+
+_SECURITY_({ The stack has underflowed. This is detected by
+forthcode({?STACK}) at several places, in particular in
+forthcode({INTERPRET}) after each word interpreted or compiled.
+There is ample slack, but malicious intent can crash the system
+before this is detected. },{dnl})_END_({_SECURITY_})
+
+forthitem
+ forthsamp({ciforth ERROR # 2 : DICTIONARY FULL})
+
+Not used.
+
+forthitem
+forthsamp({ciforth ERROR # 3 : FIRST ARGUMENT MUST BE OPTION})
+
+_HOSTED_({
+If you pass arguments to ciforth, your first argument must be
+an option (such as -a), otherwise it doesn't know what to
+do with it.})
+
+forthitem
+ forthsamp({ciforth ERROR # 4 : ISN'T UNIQUE})
+
+Not being unique is not so much an error as a warning. The word
+printed is the latest defined. A word with the same name exists already in the current
+search order.
+
+forthitem
+ forthsamp({ciforth ERROR # 5 : EMPTY NAME FOR NEW DEFINITION})
+
+An attempt is made to define a new word with an empty string
+for a name. This is detected by forthcode({(CREATE)}) .
+All forthdefi({defining word}) can return this message. It is
+typically caused by using such a word at the end of a line.
+
+forthitem
+forthsamp({ciforth ERROR # 6 : DISK RANGE ?})
+
+Reading to the terminal input buffer failed. The message is
+probably inappropriate.
+
+forthitem
+forthsamp({ciforth ERROR # 7 : FULL STACK/DICTIONARY FULL })
+
+_SECURITY_({ The stack has run into the dictionary. This can be
+caused by pushing too many items, but usually it must be
+interpreted as dictionary full. If you have enough room, you
+have passed a wrong value to forthcode({ALLOT}) . This is
+detected at several places, in particular in
+forthcode({INTERPRET}) after each word interpreted.
+},{dnl})_END_({_SECURITY_})
+
+forthitem
+ forthsamp({ciforth ERROR # 8 : ERROR ACCESSING BLOCKS FROM MASS STORAGE})
+
+An access to the Library Accessible by Block (screen aka block
+file) has failed.
+Or if you are an advanced user, and used the block
+system at your own discretion, it simply means that access to the
+blocks has failed.
+
+This is detected by
+forthcode({?DISK-ERROR}) called from places where
+a disk access has occurred. It may be that the library file has
+not been properly installed. Check the content of
+forthcode({BLOCK-FILE}) . You may not have the right to access
+it. Try to view the file. Normally the library file is opened
+read-only. If you want to edit it make sure to do
+forthcode({DEVELOP}) in order to reopen it in read/write mode.
+Otherwise you get this message too.
+
+forthitem
+ forthsamp({ciforth ERROR # 9 : UNRESOLVED FORWARD REFERENCE})
+
+A word can be compiled before it is fully defined, with a standard
+idiom like forthcode({DEFER}) or ciforth idiom forthcode({:F}).
+If it is still not fully defined when it is used, this error is
+issued.
+
+forthitem
+ forthsamp({ciforth ERROR # 10 : NOT A WORD, NOR A NUMBER OR OTHER DENOTATION})
+
+The string printed was not found in the dictionary as such,
+but its first part matches a forthdefi({denotation}) .
+The denotation word however rejected it as not properly formed.
+An example of this is a number containing some non-digit
+character, or the character denotation forthcode({&}) followed by more
+than one character. It may also be a miss-spelled word that
+looks like a number, e.g. forthsamp({25WAP}) .
+Be aware that denotations may mask regular words.
+This will only happen with user-defined denotations.
+Built-in denotations are in the
+forthcode({ONLY}) namespace, that can only be accessed last,
+because it ends the search order.
+Note that hex digits must be typed in uppercase,
+even if forthcode({"CASE-SENSITIVE"}) is in effect.
+Error 10 may be caused by using lower case where upper case is
+expected, such as for ISO standard words.
+See the section "Common problems" in this chapter if you want
+to make ciforth case insensitive.
+
+forthitem
+ forthsamp({ciforth ERROR # 11 : WORD IS NOT FOUND})
+
+The string printed was not found in the dictionary.
+This error is detected by forthcode({'}) (tick).
+This may be caused by using lower case where upper case is
+required for ISO standard words.
+See the section "Common problems" in this chapter if you want
+to make ciforth case insensitive.
+
+forthitem
+ forthsamp({ciforth ERROR # 12 : NOT RECOGNIZED})
+
+The string printed was not found in the dictionary, nor
+does it match a number, or some other denotation.
+This may be caused by using lower case where upper case is
+required for ISO standard words or for hex digits.
+See the section "Common problems" in this chapter if you want
+to make ciforth case insensitive.
+
+forthitem
+ forthsamp({ciforth ERROR # 13 : ERROR, NO FURTHER INFORMATION})
+
+This error is used temporarily, whenever there is need for
+an error message but there is not yet one assigned.
+
+forthitem
+ forthsamp({ciforth ERROR # 14 : SAVE/RESTORE MUST RUN FROM FLOPPY})
+
+_BOOTLBA_({
+If the library is saved to or restored from
+floppy this must be done in a Forth that boots from floppy.})
+
+forthitem
+ forthsamp({ciforth ERROR # 15 : CANNOT FIND WORD TO BE POSTPONED})
+
+The word following POSTPONE must be postponed, but it can't be found in the
+search order.
+
+forthitem
+ forthsamp({ciforth ERROR # 16 : CANNOT FIND WORD TO BE COMPILED})
+
+The word following [COMPILE] must be postponed, but it can't be found in the
+search order.
+
+forthitem
+forthsamp({ciforth ERROR # 17 : COMPILATION ONLY, USE IN DEFINITION})
+
+_SECURITY_({
+This error is reported by forthcode({?COMP}). You try to use a
+word that doesn't work properly in interpret mode. This mostly
+refers to control words like forthcode({IF}) and forthcode({DO}) .
+_VERBOSE_({If you want control words to work in interpret mode,
+use forthcode({WANT -scripting-}) .})
+})
+
+forthitem
+forthsamp({ciforth ERROR # 18 : EXECUTION ONLY})
+_SECURITY_({
+This error is reported by forthcode({?EXEC.}). You try to use a
+word that doesn't work properly in compile mode. You will not
+see this error, because all words in ciforth do.
+})
+
+forthitem
+ forthsamp({ciforth ERROR # 19 : CONDITIONALS NOT PAIRED})
+
+_SECURITY_({
+This error is reported by forthcode({?PAIRS}). You try to
+improperly use control words that pair up (like forthcode({IF}) and
+forthcode({THEN}) , or forthcode({DO}) and forthcode({LOOP}) )
+
+This detection mechanism
+ makes it impossible to compile some constructions allowed
+by the ISO standard.
+You may disable this checking by forthcode({NO-SECURITY}) and
+re-instate it by forthcode({DO-SECURITY}).
+You can compile even combination of forthcode({DO}) and
+forthcode({BRANCH}) controls after
+    forthcode({WANT -tricky-control- })
+})
+
+forthitem
+forthsamp({ciforth ERROR # 20 : STACK UNBALANCE, STRUCTURE UNFINISHED?})
+
+_SECURITY_({
+This error is reported by forthcode({?CSP}).
+It detects   stack unbalance between forthcode({:}) and forthcode({;}),
+or wherever you choose to use the words forthcode({!CSP}) and forthcode({?CSP}).
+This means there is an error in the compiled code.
+This message is given also if during compilation you try to use data
+that is put on the stack before forthcode({:}) .
+Instead of
+
+forthsamp({<generatedata> : name LITERAL .... ;})
+
+use
+
+forthsamp({<generatedata> : name [ _ SWAP ] LITERAL .... ; DROP})
+
+to keep the stack at the same depth.
+})
+
+forthitem
+forthsamp({ciforth ERROR # 21 : IN PROTECTED DICTIONARY})
+
+The word you are trying to forthcode({FORGET}) is below the forthcode({FENCE}) ,
+such that forgetting is not allowed.
+
+forthitem
+forthsamp({ciforth ERROR # 22 : USE ONLY WHEN LOADING})
+
+_SECURITY_({
+This error is reported by forthcode({?LOAD}). You try to use a
+word that only works while loading from the forthcode({BLOCK-FILE}) ,
+in casu forthcode({-->}) .
+})
+
+forthitem
+forthsamp({ciforth ERROR # 23 : OFF CURRENT EDITING SCREEN})
+
+forthitem
+forthsamp({ciforth ERROR # 24 : (WARNING) NOT PRESENT, THOUGH WANTED})
+This error is reported by forthcode({WANTED}).
+The word you required, has been looked up in the index lines.
+It was not found in the index lines,
+or it was a dummy item,
+that only marks the screen to be loaded,
+e.g. forthsamp({-scripting-}).
+In the latter case it can be safely ignored.
+dnl Maybe it is better to replace by: required but not found.
+_VERBOSE_({ This forthemph({must}) be a warning only,
+because compilation can still succeed if the word is supplied by
+other means, in particular conditional compilation.})
+
+forthitem
+forthsamp({ciforth ERROR # 25 : LIST EXPECTS DECIMAL})
+
+This message is used by a redefined forthcode({LIST}) , to prevent
+getting the wrong screen.
+
+forthitem
+forthsamp({ciforth ERROR # 33 : INPUT EXHAUSTED})
+
+A parsing word doesn't find the input it expects, even after
+forthcode({REFILL}).
+
+forthitem
+forthsamp({ciforth ERROR # 40 : REGRESSION TEST FAILS, STACK DEPTH ERROR})
+
+This message is detected by forthcode({REGRESS}) . It means that the number
+of stack items left by the test, doesn't agree with the number of items in the
+result specification.
+
+forthitem
+forthsamp({ciforth ERROR # 41 : REGRESSION TEST FAILS, RETURN VALUE ERROR})
+
+This message is detected by forthcode({REGRESS}) . It means that the
+stack items left by the test, don't agree with items in the result
+specification.
+
+forthitem
+forthsamp({ciforth ERROR # 42 : REGRESSION TEST MALL-FORMED, SECOND PART MISSING})
+
+This message is given by forthcode({REGRESS}) if there is no forthcode({S:}) part.
+
+forthitem
+forthsamp({ciforth ERROR # 48 : NO BUFFER COULD BE FREED, ALL LOCKED})
+
+While a block is in use by forthcode({THRU}), it is forthdefi({locked}),
+which means that it must stay in memory.
+In addition blocks can be locked explicitly by forthcode({LOCK}).
+If a free block is needed, and there is no block that can be written
+back to the mass storage (disk or flash), you get this error.
+forthitem
+forthsamp({ciforth ERROR # 49 : EXECUTION OF EXTERNAL PROGRAM FAILED})
+The word forthcode({SYSTEM}) detected an error while trying to execute
+an external program.
+forthitem
+forthsamp({ciforth ERROR # 50 : NOT ENOUGH MEMORY FOR ALLOCATE})
+The dynamic memory allocation could not allocate a buffer of the
+size wanted, because there is not enough
+consecutive memory available.
+Fragmentation can cause this to happen while there is more than
+that size available in total.
+This is detected by forthcode({ALLOCATE}) or forthcode({RESIZE}) .
+
+forthitem
+forthsamp({ciforth ERROR # 51 : UNKNOWN FORMAT IDENTIFIER})
+This error is detected by the forthcode({FORMAT}) wordset.
+The word following forthkey(%) in a format string, is not known.
+This means that it is not present in the forthdefi({namespace}) dnl
+forthcode({FORMAT-WID}).
+
+forthenditemize
+
+forthxref({ASSEMBLER}), for errors generated by the assembler.
+In general these have numbers that are higher than the general errors.
+
+@node Documentation,Glossary,Errors,Top
+@chapter  Documentation summary
+
+The homepage of this Forth is
+
+http://home.hccnet.nl/a.w.m.van.der.horst/lina.html
+forthbreak
+
+It is based on a generic system available via
+
+http://home.hccnet.nl/a.w.m.van.der.horst/ciforth.html
+forthbreak
+
+The implementation of this Forth is indebted to FIGForth
+
+http://home.hccnet.nl/a.w.m.van.der.horst/figforth.html
+forthbreak
+
+A tutorial in English (and Dutch) is to be found at
+
+https://forth.hcc.nl/w/Ciforth/Ciforth?setlang=en
+forthbreak
+
+dnl An attempt by the same author at simplicity : yourforth
+
+The most important general Forth site is
+
+http://www.forth.org
+
+with links to all
+Forth chapters and commercial and free Forth implementation.
+forthbreak
+
+Like all modern languages the Forth ISO standard is available on the web
+
+http://www.taygeta.com/forth/dpans.htm
+forthbreak
+The official, printed manual by the Amercian National Standards Institute
+commands a stiff price.
+forthbreak
+
+
+In print
+forthitemize
+forthitem
+Starting forth by Leo Brodie
+
+A classic still worth reading, despite its age. You must adapt the examples
+in order to use it with an ISO Forth,
+A modernized version is available online at
+forthbreak
+http://www.forth.com/starting-forth/
+
+forthitem
+Going Forth by Leo Brodie
+forthbreak
+More timeless, maybe even more important, about the filosofy of Forth.
+
+forthitem
+The German Fig Chapter has a publication: Vierte Dimension.
+forthenditemize
+
+For historic interest the following is copied from the FIG documentation 1978.
+
+Caltech FORTH Manual, an advanced manual with internal details of Forth. Has
+Some implementation peculiarities. The Caltech Book Store, Pasadena, CA.
+
+Kitt Peak Forth Primer, edited by the Forth Interest Group, P. O.
+Box 1105, San Carlos, CA 94070.
+
+microFORTH Primer, Forth, Inc.
+815 Manhattan Ave. Manhattan Beach, CA 90266
+
+Forth Dimensions, newsletter of the Forth Interest Group, $5.00 for 6 issues
+including membership. F-I-G. P.O. Box 1105, San Carlos, CA. 94070
+
+@node Glossary,Top,Documentation,Top
+@chapter Glossary
+Wherever it says
+single precision number or forthdefi({cell}) _BITS_ bits is meant.
+Wherever it says
+ forthdefi({double}) or ``double precision number'' a
+_BITS16_({32})_BITS32_({64})_BITS64_({128})
+bits number is meant.
+
+dnl symbols is a reserved name in `m4'. FIXME. Check whether needed still with -G.
+The first line of each entry shows a symbolic description of the action of
+the proceedure on the parameter stack. The {symbols} indicate the order in
+which input parameters have been placed on the stack. The dashes ``---''
+indicate the execution point; any parameters left on the stack are listed.
+In this notation, the top of the stack is to the right.
+Any symbol may be followed by a number to indicate different data items
+passed to or from a Forth word.
+
+The {symbols} include:
+
+@table @samp
+forthitem addr
+memory address
+forthitem b
+8 bit byte (the remaining bits are zero)
+forthitem c
+7 bit ascii character (the remaining bits are zero)
+forthitem d
+_BITS16_({32})_BITS32_({64})_BITS64_({128}) bit signed double integer: most significant portion with sign
+on top of stack
+forthitem dea
+A forthdefi({dictionary entry address}) , the basic address of a Forth word from which
+all its properties can be found.
+forthitem f
+logical forthdefi({flag}): zero is interpreted as false, non-zero as true
+forthitem faraddr
+_PROTECTED_({a <selector:address> pair})
+_REAL_({A <segment descriptor:address> pair})
+forthitem ff
+forthdefi({Forth flag}), a well-formed logical flag, 0=false, -1=true.
+forthitem false
+a false forthdefi({Forth flag}): 0
+forthitem n
+_BITS_ bit signed integer number;
+it is also used for a _BITS_-bit entity where it is irrelevant what number it represents
+forthitem sc
+a forthdefi({string constant}), i.e. two cells, an address and a length;
+length characters are present, starting at the address
+_VERBOSE_({(they must not be changed)})
+forthitem true
+a true forthdefi({Forth flag}): -1.
+forthitem u
+_BITS_-bit unsigned integer, also used whenever a cell is considered as a
+bitset.
+forthitem ud
+_BITS16_({32})_BITS32_({64})_BITS64_({128})-bit unsigned double integer: most significant portion
+on top of stack
+@end table
+
+
+The capital letters on the right show definition characteristics:
+
+@table @samp
+forthitem C
+May only be used within a colon definition.
+forthitem E
+Intended for execution only.
+forthitem FIG
+Belongs to the FIG model
+forthitem I
+Has immediate bit set. Will execute even when compiling.
+forthitem ISO
+Belongs to ISO standard
+forthitem NFIG
+Word belongs to FIG standard,
+but the implementation is not quite conforming.
+forthitem NISO
+Word belongs to ISO standard, but the implementation is not
+quite conforming.
+forthitem P
+Word is a prefix, interprets and optionally compiles remainder of word.
+forthitem WANT
+Word is not in the kernel, use the forthcode({WANT}) to load
+it from the library.
+These words are maintained and tested,
+will only be changed with notice and an upgrade pad will be supplied.
+
+forthitem U
+A user variable.
+@end table
+
+Where there is mention of a standard or a model,
+it means that the word actually complies to the standard or the model,
+not that some word of that name is present in that standard.
+_VERBOSE_({Words marked with forthsamp({ISO,FIG}) will behave identically
+over all but the whole spectra of Forth's.})
+
+Unless otherwise noted, all references to numbers are for _BITS_-bit
+signed integers. For _BITS16_({32})_BITS32_({64})_BITS64_({128})-bit signed numbers, the
+most significant part (with the sign) is on top.
+
+All arithmetic is implicitly _BITS_-bit signed integer math, with error and
+under-flow indication unspecified.
+
+A forthdefi({nil pointer}) is an address containing zero. This
+indicates an invalid address.
+
+The Forth words are divided into forthdefi({wordset})s, that contain
+words that logically belong together. Each wordset has a separate section
+with a description.
+The following rules take precedence over any wordset a word may
+logically belong to.
+forthitemize
+forthitem
+A defining word --- one that adds to the dictionary --- is
+present in the wordset forthsamp({DEFINING}).
+forthitem
+A denotation word -- one that has the prefix bit set -- is
+present in the wordset forthsamp({DENOTATIONS}).
+forthitem
+An environmental query word --- one that is understood by
+forthcode({?ENVIRONMENT}) --- is present in the wordset
+forthsamp({ENVIRONMENTS}).
+forthenditemize
+
+include(menu.texinfo)
+undefine({W})
+include(wordset.mi)
+
+@node Glossary Index,,,Top
+@unnumbered Glossary Index
+This index finds the glossary description of each word.
+@printindex pg
+@node Forth Word Index,,,Top
+@unnumbered Forth Word Index
+This index contains @emph{{all}} references to a word.
+Use the glossary index to find the glossary description of each word.
+@printindex fn
+@node Concept Index,,,Top
+@unnumbered Concept Index
+Mostly the first reference is where the concept is explained.
+But sometimes in introductory and tutorial sections
+an explanation sometimes was considered too distracting.
+@printindex cp
+@summarycontents
+@contents
+@bye
